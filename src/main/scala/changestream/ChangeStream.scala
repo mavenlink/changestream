@@ -2,10 +2,14 @@ package changestream
 
 import java.io.IOException
 
-import akka.actor.ActorSystem
+import akka.actor.{ActorSystem, Props}
+import akka.pattern.ask
+import changestream.actors.PositionSaverActor.{PositionInfo, StartFrom}
+import changestream.actors.{JsonFormatterActor, PositionSaverActor}
 import com.github.shyiko.mysql.binlog.BinaryLogClient
 import com.typesafe.config.ConfigFactory
 import org.slf4j.LoggerFactory
+
 import scala.concurrent.Await
 import scala.concurrent.duration._
 import scala.language.postfixOps
@@ -39,6 +43,16 @@ object ChangeStream extends App {
   /** Register the object that will receive BinaryLogClient connection lifecycle events **/
   client.registerLifecycleListener(ChangeStreamLifecycleListener)
 
+  protected lazy val positionActor = system.actorOf(Props(new PositionSaverActor(config)), name = "positionSaver")
+
+  val positionGetterFuture = ask(positionActor, PositionSaverActor.Initialize(PositionInfo(s"${client.getBinlogFilename}:${client.getBinlogPosition}", 0))).map({
+    case StartFrom(p) =>
+      val (file, position) = p.position.split(":")
+      client.setBinlogFilename(file)
+      client.setBinlogPosition(position)
+  })
+  Await.result(positionGetterFuture, 10 seconds)
+
   /** Gracefully handle application shutdown from
     *  - Normal program exit
     *  - TERM signal
@@ -53,6 +67,10 @@ object ChangeStream extends App {
     /** Give the changestream actor system plenty of time to finish processing events **/
     Await.result(system.terminate(), 60 seconds)
   })
+
+  // Get the current binlog position from the saver, pass the latest position
+  //  have position? --> return it
+  //  don't have anything? --> start at current position
 
   /** Finally, signal the BinaryLogClient to start processing events **/
   log.info(s"Starting changestream...")
