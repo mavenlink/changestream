@@ -63,7 +63,7 @@ object Fixtures {
     s"delete from ${columnsInfo.database}.${columnsInfo.tableName} where ${where}"
   }
 
-  private def randomWord(maxLength: Int): String = {
+  def randomWord(maxLength: Int): String = {
     val alphabet = "abcdefghijklmnopqrstuvwxyz"
     Stream.continually(Random.nextInt(alphabet.size)).map(alphabet).take(maxLength).mkString
   }
