@@ -1,6 +1,7 @@
 package changestream
 
 import java.io.IOException
+import java.util.concurrent.TimeUnit
 
 import akka.actor.{ActorSystem, Props}
 import akka.pattern.ask
@@ -45,12 +46,17 @@ object ChangeStream extends App {
 
   protected lazy val positionActor = system.actorOf(Props(new PositionSaverActor(config)), name = "positionSaver")
 
-  val positionGetterFuture = ask(positionActor, PositionSaverActor.Initialize(PositionInfo(s"${client.getBinlogFilename}:${client.getBinlogPosition}", 0))).map({
-    case StartFrom(p) =>
-      val (file, position) = p.position.split(":")
-      client.setBinlogFilename(file)
-      client.setBinlogPosition(position)
-  })
+  implicit val timeout = new akka.util.Timeout(5, TimeUnit.SECONDS)
+  implicit val ec = system.dispatcher
+  val positionGetterFuture = ask(positionActor, PositionSaverActor.Initialize(PositionInfo(s"${client.getBinlogFilename}:${client.getBinlogPosition}", 0))).
+    map({
+      case StartFrom(p) =>
+        p.position.split(":") match {
+          case Array(file, position) =>
+            client.setBinlogFilename(file)
+            client.setBinlogPosition(position.toLong)
+        }
+    })
   Await.result(positionGetterFuture, 10 seconds)
 
   /** Gracefully handle application shutdown from
