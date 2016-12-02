@@ -87,8 +87,17 @@ object ChangeStream extends App {
   def serverName = s"${mysqlHost}:${mysqlPort}"
   def clientId = client.getServerId
 
-  def currentPosition = {
-    s"${client.getBinlogFilename}:${client.getBinlogPosition}"
+  def currentPosition: Option[String] = {
+    val gtidSet = client.getGtidSet
+    if(gtidSet != null) { //scalastyle:ignore
+      Some(gtidSet)
+    }
+    else if(client.getBinlogFilename != null) { //scalastyle:ignore
+      Some(s"${client.getBinlogFilename}:${client.getBinlogPosition}")
+    }
+    else {
+      None
+    }
   }
 
   def isConnected = client.isConnected
@@ -118,7 +127,6 @@ object ChangeStream extends App {
   def reset() = {
     if(!client.isConnected()) {
       client.setBinlogFilename(null) //scalastyle:ignore
-      Future { getConnected }
       true
     }
     else {
