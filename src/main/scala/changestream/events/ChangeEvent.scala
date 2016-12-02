@@ -155,5 +155,6 @@ case class MutationWithInfo(
                              mutation: MutationEvent,
                              transaction: Option[TransactionInfo] = None,
                              columns: Option[ColumnsInfo] = None,
-                             formattedMessage: Option[String] = None
+                             formattedMessage: Option[String] = None,
+                             position: Option[String] = None
                            )
