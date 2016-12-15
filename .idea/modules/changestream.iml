@@ -37,6 +37,8 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="SBT: ch.qos.logback:logback-classic:1.1.7:jar" level="project" />
+    <orderEntry type="library" name="SBT: com.typesafe.akka:akka-protobuf_2.11:2.4.14:jar" level="project" />
+    <orderEntry type="library" name="SBT: com.typesafe.akka:akka-persistence_2.11:2.4.14:jar" level="project" />
     <orderEntry type="library" name="SBT: software.amazon.ion:ion-java:1.0.1:jar" level="project" />
     <orderEntry type="library" scope="TEST" name="SBT: org.scalatest:scalatest_2.11:3.0.1:jar" level="project" />
     <orderEntry type="library" scope="TEST" name="SBT: org.scalactic:scalactic_2.11:3.0.1:jar" level="project" />

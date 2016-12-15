@@ -13,6 +13,7 @@ object Dependencies {
     // akka actor system
     "com.typesafe.akka" %% "akka-actor" % akkaVersion,
     "com.typesafe.akka" %% "akka-agent" % akkaVersion,
+    "com.typesafe.akka" %% "akka-persistence" % akkaVersion,
     "com.typesafe.akka" %% "akka-slf4j" % akkaVersion,
     // spray for http control server
     "io.spray" %% "spray-can" % sprayVersion,

@@ -141,7 +141,7 @@ class ColumnInfoActor (
         throw exception
     } map {
       case Some(result) => result
-      case None => log.warn(s"No column metadata found for table ${database}.${tableName}")
+      case None => log.warn(s"No column metadata found for table ${database}.${tableName}") // should probably fail
     } pipeTo self
   }
 

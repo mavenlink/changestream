@@ -80,7 +80,7 @@ object ChangeStreamEventListener extends EventListener {
 
     changeEvent match {
       case Some(e: TransactionEvent)  => transactionActor ! e
-      case Some(e: MutationEvent)     => transactionActor ! MutationWithInfo(e)
+      case Some(e: MutationEvent)     => transactionActor ! MutationWithInfo(e, position = ChangeStream.currentPosition)
       case Some(e: AlterTableEvent)   => columnInfoActor ! e
       case None =>
         log.debug(s"Ignoring ${binaryLogEvent.getHeader[EventHeaderV4].getEventType} event.")
