@@ -45,7 +45,7 @@ class SnsActor(config: Config = ConfigFactory.load().getConfig("changestream")) 
   protected val topicArns = mutable.HashMap.empty[String, Future[CreateTopicResult]]
 
   def receive = {
-    case MutationWithInfo(mutation, _, _, Some(message: String)) =>
+    case MutationWithInfo(mutation, _, _, Some(message: String), _) =>
       log.debug(s"Received message: ${message}")
       send(mutation, message)
     case _ =>

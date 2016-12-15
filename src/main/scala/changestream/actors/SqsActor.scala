@@ -72,7 +72,7 @@ class SqsActor(config: Config = ConfigFactory.load().getConfig("changestream")) 
   override def postStop() = cancelDelayedFlush
 
   def receive = {
-    case MutationWithInfo(mutation, _, _, Some(message: String)) =>
+    case MutationWithInfo(mutation, _, _, Some(message: String), _) =>
       log.debug(s"Received message: ${message}")
 
       cancelDelayedFlush
