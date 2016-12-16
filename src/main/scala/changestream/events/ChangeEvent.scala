@@ -25,6 +25,14 @@ case class Gtid(gtid: String) extends TransactionEvent
 case object CommitTransaction extends TransactionEvent
 case object RollbackTransaction extends TransactionEvent
 
+sealed trait BinlogPosition
+case class GtidPosition(gtid: String) extends BinlogPosition {
+  override def toString = gtid
+}
+case class FilePosition(file: String, position: Long) extends BinlogPosition {
+  override def toString = s"$file:$position"
+}
+
 /** Represents an ALTER TABLE statement, created from QUERY
   * event in the binlog.
   *
@@ -156,5 +164,5 @@ case class MutationWithInfo(
                              transaction: Option[TransactionInfo] = None,
                              columns: Option[ColumnsInfo] = None,
                              formattedMessage: Option[String] = None,
-                             position: Option[String] = None
+                             position: Option[BinlogPosition] = None
                            )

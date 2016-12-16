@@ -14,11 +14,12 @@ import akka.pattern.{after, ask}
 import akka.io.IO
 import akka.util.Timeout
 import changestream.actors.ControlInterfaceActor
+import changestream.events.{BinlogPosition, FilePosition, GtidPosition}
 import spray.can.Http
 
 object ChangeStream extends App {
   protected val log = LoggerFactory.getLogger(getClass)
-  protected implicit val system = ActorSystem("changestream")
+  implicit val system = ActorSystem("changestream")
 
   protected val config = ConfigFactory.load().getConfig("changestream")
   protected val mysqlHost = config.getString("mysql.host")
@@ -87,16 +88,15 @@ object ChangeStream extends App {
   def serverName = s"${mysqlHost}:${mysqlPort}"
   def clientId = client.getServerId
 
-  def currentPosition: Option[String] = {
-    val gtidSet = client.getGtidSet
-    if(gtidSet != null) { //scalastyle:ignore
-      Some(gtidSet)
-    }
-    else if(client.getBinlogFilename != null) { //scalastyle:ignore
-      Some(s"${client.getBinlogFilename}:${client.getBinlogPosition}")
-    }
-    else {
-      None
+  def currentPosition: Option[BinlogPosition] = {
+    client.getGtidSet match {
+      case null => client.getBinlogFilename match { //scalastyle:ignore
+        case null => None //scalastyle:ignore
+        case file: String => {
+          Some(FilePosition(file, client.getBinlogPosition))
+        }
+      }
+      case gtid: String => Some(GtidPosition(gtid))
     }
   }
 
@@ -105,7 +105,9 @@ object ChangeStream extends App {
   def connect() = {
     if(!client.isConnected()) {
       isPaused = false
+
       Future { getConnected }
+
       true
     }
     else {
@@ -116,7 +118,9 @@ object ChangeStream extends App {
   def disconnect() = {
     if(client.isConnected()) {
       isPaused = true
+
       client.disconnect()
+
       true
     }
     else {
@@ -132,6 +136,15 @@ object ChangeStream extends App {
     else {
       false
     }
+  }
+
+  def stop() = {
+    log.info("Shutting down...")
+
+    disconnect()
+    controlActor ! Http.Unbind
+
+    terminateActorSystemAndWait
   }
 
   protected def terminateActorSystemAndWait = {

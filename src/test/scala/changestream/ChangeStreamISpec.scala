@@ -1,13 +1,84 @@
 package changestream
 
+import changestream.events.{FilePosition, GtidPosition}
 import changestream.helpers.App
 
 class ChangeStreamISpec extends App {
+  "disconnect and reconnect without reset should recover where it left off" in {
+    ChangeStream.isConnected should be(true)
+    ChangeStream.currentPosition shouldNot be(None)
+
+    ChangeStream.disconnect()
+    eventually { ChangeStream.isConnected should be(false) }
+
+    queryAndWait(INSERT)
+    validateNoEvents
+
+    ChangeStream.connect()
+    eventually { ChangeStream.isConnected should be(true) }
+    assertValidEvent("insert", sql = Some(INSERT))
+  }
+
+  "disconnect and reconnect with reset should start from real time" in {
+    ChangeStream.isConnected should be(true)
+    ChangeStream.currentPosition shouldNot be(None)
+
+    ChangeStream.disconnect()
+    eventually { ChangeStream.isConnected should be(false) }
+
+    queryAndWait(INSERT)
+
+    ChangeStream.reset()
+    ChangeStream.currentPosition should be(None)
+
+    ChangeStream.connect()
+    eventually { ChangeStream.isConnected should be(true) }
+    ChangeStream.currentPosition shouldNot be(None)
+    validateNoEvents
+  }
+
+  "when handling a mutation" should {
+    "using file-based replication" in {
+      val initialPosition = ChangeStream.currentPosition
+      queryAndWait(INSERT)
+      assertValidEvent("insert", sql = Some(INSERT))
+      val newPosition = ChangeStream.currentPosition
+
+      initialPosition shouldNot be(None)
+      newPosition shouldNot be(None)
+
+      (initialPosition, newPosition) match {
+        case (Some(FilePosition(file1, position1)), Some(FilePosition(file2, position2))) =>
+          file1 should be(file2)
+          assert(position1 < position2)
+        case _ => {}
+      }
+    }
+
+    "using gtid-based replication" in {
+      val initialPosition = ChangeStream.currentPosition
+      queryAndWait(INSERT)
+      assertValidEvent("insert", sql = Some(INSERT))
+      val newPosition = ChangeStream.currentPosition
+
+      initialPosition shouldNot be(None)
+      newPosition shouldNot be(None)
+
+      (initialPosition, newPosition) match {
+        case (Some(GtidPosition(gtid1)), Some(GtidPosition(gtid2))) =>
+          assert(false)
+        case _ => {}
+      }
+    }
+  }
+
   "when handling an INSERT statement" should {
     "affecting a single row, generates a single insert event" in {
       queryAndWait(INSERT)
 
+      println(ChangeStream.currentPosition)
       assertValidEvent("insert", sql = Some(INSERT))
+      println(ChangeStream.currentPosition)
     }
   }
 
@@ -91,6 +162,11 @@ class ChangeStreamISpec extends App {
         validateNoEvents
       }
     }
+  }
+
+  "terminating the system should work" in {
+    ChangeStream.stop()
+    eventually { ChangeStream.isConnected should be(false) }
   }
 }
 
