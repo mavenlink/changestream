@@ -4,13 +4,14 @@ import akka.testkit.TestProbe
 import changestream.events.MutationWithInfo
 import changestream.{ChangeStream, ChangeStreamEventListener}
 import com.typesafe.config.ConfigFactory
+import org.scalatest.concurrent.{Eventually, IntegrationPatience}
 import spray.json._
 
 import scala.concurrent.duration._
 import scala.language.postfixOps
 import scala.util.Random
 
-class App extends Database with Config {
+class App extends Database with Config with Eventually with IntegrationPatience {
   val app = new Thread {
     override def run = ChangeStream.main(Array())
   }
