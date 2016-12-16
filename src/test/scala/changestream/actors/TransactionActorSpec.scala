@@ -19,7 +19,7 @@ class TransactionActorSpec extends Base {
   def expectValidTransactionActorOutput(mutation: MutationEvent, rowCount: Long = 1, guid: Option[String] = None) = {
     val event = probe.expectMsgType[MutationWithInfo]
     inside(event) {
-      case MutationWithInfo(m, Some(transactionInfo), _, _) =>
+      case MutationWithInfo(m, Some(transactionInfo), _, _, _) =>
         m should be(mutation)
         transactionInfo.guid.length should not be(0)
         guid.foreach(transactionInfo.guid should be(_))
