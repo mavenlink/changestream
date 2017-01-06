@@ -34,6 +34,7 @@ object Dependencies {
     "com.typesafe.akka" %% "akka-testkit" % akkaVersion % "it,test,bench",
     "io.spray" %% "spray-testkit" % sprayVersion % "it,test,bench",
     "org.scalatest" %% "scalatest" % "3.0.1" % "it,test,bench",
-    "com.storm-enroute" %% "scalameter" % "0.7" % "it,test,bench"
+    "com.storm-enroute" %% "scalameter" % "0.7" % "it,test,bench",
+    "com.github.michaelpisula" %% "akka-persistence-inmemory" % "0.2.1" % "it,test,bench"
   )
 }
