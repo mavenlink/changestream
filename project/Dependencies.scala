@@ -8,8 +8,9 @@ object Dependencies {
 
   val libraryDependencies = Seq(
     // application
-    "ch.qos.logback" % "logback-classic" % "1.1.7",
     "com.typesafe" % "config" % "1.3.1",
+    "org.slf4j" % "slf4j-api" % "1.7.22",
+    "ch.qos.logback" % "logback-classic" % "1.1.7",
     // akka actor system
     "com.typesafe.akka" %% "akka-actor" % akkaVersion,
     "com.typesafe.akka" %% "akka-agent" % akkaVersion,

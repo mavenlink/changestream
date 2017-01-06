@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<configuration debug="true">
+<configuration>
   <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
     <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
-      <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} %X{akkaSource} - %msg%n</pattern>
+      <pattern>%d{HH:mm:ss.SSS} [%X{sourceThread}] %-5level %logger{36} %X{akkaSource} - %msg%n</pattern>
     </encoder>
   </appender>
-  <root level="INFO">
+  <root level="WARN">
     <appender-ref ref="STDOUT" />
   </root>
 </configuration>
