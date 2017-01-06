@@ -18,6 +18,7 @@ object ChangeStreamEventListener extends EventListener {
   protected val blacklist: java.util.List[String] = new java.util.LinkedList[String]()
 
   @volatile protected var emitterLoader: (ActorRefFactory => ActorRef) = (_ => system.actorOf(Props(new SnsActor()), name = "emitterActor"))
+  @volatile protected var _currentBinlogFile: String = ""
 
   protected lazy val formatterActor = system.actorOf(Props(new JsonFormatterActor(emitterLoader)), name = "formatterActor")
   protected lazy val columnInfoActor = system.actorOf(Props(new ColumnInfoActor(_ => formatterActor)), name = "columnInfoActor")
@@ -70,20 +71,51 @@ object ChangeStreamEventListener extends EventListener {
     */
   def setEmitterLoader(loader: (ActorRefFactory => ActorRef)) = emitterLoader = loader
 
+  def currentBinlogFile = _currentBinlogFile
+
+  /**
+    * TODO
+    */
+//  def currentPosition: Option[BinlogPosition] = {
+//    //client.getGtidSet match {
+//      //case null =>
+//        currentBinlogFile match { //scalastyle:ignore
+//          case null => None //scalastyle:ignore
+//          case file: String => {
+//            val position = nextPosition match {
+//              case 0 => client.getBinlogPosition
+//              case _ => nextPosition
+//            }
+//
+//            Some(FilePosition(file, position))
+//          }
+//        }
+//      //case gtid: String => Some(GtidPosition(gtid))
+//    //}
+//  }
+
   /** Sends binlog events to the appropriate changestream actor.
     *
     * @param binaryLogEvent The binlog event
     */
   def onEvent(binaryLogEvent: Event) = {
     log.debug(s"Received event: ${binaryLogEvent}")
-    val changeEvent = getChangeEvent(binaryLogEvent)
+    val header = binaryLogEvent.getHeader[EventHeaderV4]
+    val changeEvent = getChangeEvent(binaryLogEvent, header)
 
     changeEvent match {
-      case Some(e: TransactionEvent)  => transactionActor ! e
-      case Some(e: MutationEvent)     => transactionActor ! MutationWithInfo(e, position = ChangeStream.currentPosition)
-      case Some(e: AlterTableEvent)   => columnInfoActor ! e
+      case Some(e: TransactionEvent) =>
+        transactionActor ! e
+
+      case Some(e: MutationEvent) =>
+        val position = FilePosition(currentBinlogFile, header.getNextPosition)
+        transactionActor ! MutationWithInfo(e, position = Some(position))
+
+      case Some(e: AlterTableEvent) =>
+        columnInfoActor ! e
+
       case None =>
-        log.debug(s"Ignoring ${binaryLogEvent.getHeader[EventHeaderV4].getEventType} event.")
+        log.debug(s"Ignoring ${header.getEventType} event.")
     }
   }
 
@@ -92,9 +124,7 @@ object ChangeStreamEventListener extends EventListener {
     * @param event The java binlog listener event
     * @return The resulting ChangeEvent
     */
-  def getChangeEvent(event: Event): Option[ChangeEvent] = {
-    val header = event.getHeader[EventHeaderV4]
-
+  def getChangeEvent(event: Event, header: EventHeaderV4): Option[ChangeEvent] = {
     header.getEventType match {
       case eventType if EventType.isRowMutation(eventType) =>
         getMutationEvent(event, header)
@@ -103,19 +133,22 @@ object ChangeStreamEventListener extends EventListener {
         Some(Gtid(event.getData[GtidEventData].getGtid))
 
       case XID =>
-        Some(CommitTransaction)
+        Some(CommitTransaction(header.getNextPosition))
 
       case QUERY =>
-        parseQueryEvent(event.getData[QueryEventData])
+        parseQueryEvent(event.getData[QueryEventData], header)
 
       case FORMAT_DESCRIPTION =>
         val data = event.getData[FormatDescriptionEventData]
         log.info(s"Server version: ${data.getServerVersion}, binlog version: ${data.getBinlogVersion}")
         None
 
+      case ROTATE =>
+        _currentBinlogFile = event.getData[RotateEventData].getBinlogFilename
+        None
+
       // Known events that are safe to ignore
       case PREVIOUS_GTIDS => None
-      case ROTATE => None
       case ROWS_QUERY => None
       case TABLE_MAP => None
       case ANONYMOUS_GTID => None
@@ -155,13 +188,13 @@ object ChangeStreamEventListener extends EventListener {
     * @param queryData The QUERY event data
     * @return
     */
-  protected def parseQueryEvent(queryData: QueryEventData): Option[ChangeEvent] = {
+  protected def parseQueryEvent(queryData: QueryEventData, header: EventHeaderV4): Option[ChangeEvent] = {
     queryData.getSql match {
       case sql if sql matches "(?i)^begin" =>
         Some(BeginTransaction)
 
       case sql if sql matches "(?i)^commit" =>
-        Some(CommitTransaction)
+        Some(CommitTransaction(header.getNextPosition))
 
       case sql if sql matches "(?i)^rollback" =>
         Some(RollbackTransaction)

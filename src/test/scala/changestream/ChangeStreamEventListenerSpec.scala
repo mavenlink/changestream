@@ -23,17 +23,32 @@ class ChangeStreamEventListenerSpec extends Base with Config {
 
       ChangeStreamEventListener.onEvent(rotate)
     }
+
     "Should not crash when receiving a STOP event" in {
       header.setEventType(EventType.STOP)
       val stop = new Event(header, null)
 
       ChangeStreamEventListener.onEvent(stop)
     }
+
     "Should not crash when receiving a FORMAT_DESCRIPTION event" in {
       header.setEventType(EventType.FORMAT_DESCRIPTION)
       val rotate = new Event(header, new FormatDescriptionEventData())
 
       ChangeStreamEventListener.onEvent(rotate)
+    }
+  }
+
+  "When receiving a ROTATE event" should {
+    "Properly change the binlog file name" in {
+      header.setEventType(EventType.ROTATE)
+      val rotateData = new RotateEventData()
+      rotateData.setBinlogFilename("test123")
+      val rotate = new Event(header, rotateData)
+
+      ChangeStreamEventListener.onEvent(rotate)
+
+      ChangeStreamEventListener.currentBinlogFile should be("test123")
     }
   }
 

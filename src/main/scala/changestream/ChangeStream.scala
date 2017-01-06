@@ -88,19 +88,11 @@ object ChangeStream extends App {
   def serverName = s"${mysqlHost}:${mysqlPort}"
   def clientId = client.getServerId
 
-  def currentPosition: Option[BinlogPosition] = {
-    client.getGtidSet match {
-      case null => client.getBinlogFilename match { //scalastyle:ignore
-        case null => None //scalastyle:ignore
-        case file: String => {
-          Some(FilePosition(file, client.getBinlogPosition))
-        }
-      }
-      case gtid: String => Some(GtidPosition(gtid))
-    }
-  }
-
   def isConnected = client.isConnected
+
+  def setPosition(position: BinlogPosition) = {
+    println(s"position is $position")
+  }
 
   def connect() = {
     if(!client.isConnected()) {
