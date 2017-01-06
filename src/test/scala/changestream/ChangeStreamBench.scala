@@ -107,7 +107,7 @@ object ChangeStreamBench extends BenchBase {
         actor ! BeginTransaction
         actor ! mutation
         actor ! mutation
-        actor ! CommitTransaction
+        actor ! CommitTransaction(1)
       })
       probe.receiveN(ITERATIONS * 2)
     }

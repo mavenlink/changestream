@@ -14,7 +14,7 @@ class TransactionActor(getNextHop: ActorRefFactory => ActorRef) extends Actor {
   protected val nextHop = getNextHop(context)
 
   /** Mutable State! */
-  protected val mutationBuffer = mutable.ArrayBuffer.empty[MutationWithInfo]
+  protected val mutationBuffer = mutable.ListBuffer[MutationWithInfo]()
   protected var inTransaction = false
   protected var transactionId: Option[String] = None
 
@@ -28,15 +28,22 @@ class TransactionActor(getNextHop: ActorRefFactory => ActorRef) extends Actor {
       log.debug(s"Received GTID for transaction: ${gtid}")
       transactionId = Some(gtid)
 
-    case CommitTransaction =>
-      log.debug(s"Received CommitTransacton")
+    case CommitTransaction(nextPosition) =>
+      log.debug(s"Received CommitTransacton with next position $nextPosition")
 
       lazy val txid = transactionId.getOrElse(UUID.randomUUID.toString)
       lazy val transactionInfo = TransactionInfo(txid, mutationBuffer.view.map(_.mutation.rows.length).sum)
 
+      log.debug(s"Adding transaction info and forwarding ${mutationBuffer.length} events to the ${nextHop.path.name} actor")
+
+      val lastEventSequenceNumber = mutationBuffer.last.mutation.sequence
       mutationBuffer.foreach(event => {
-        log.debug(s"Adding transaction info and forwarding to the ${nextHop.path.name} actor")
-        nextHop ! event.copy(transaction = Some(transactionInfo))
+        if(event.mutation.sequence == lastEventSequenceNumber) {
+          nextHop ! event.copy(transaction = Some(transactionInfo), position = Some(FilePosition(event.position.get.asInstanceOf[FilePosition].file, nextPosition)))
+        }
+        else {
+          nextHop ! event.copy(transaction = Some(transactionInfo), position = None)
+        }
       })
 
       inTransaction = false

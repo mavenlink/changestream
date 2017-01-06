@@ -9,7 +9,7 @@ import changestream.events._
 import com.typesafe.config.ConfigFactory
 
 class ChangeStreamEventListenerSpec extends Base with Config {
-  def getTypedEvent[T](event: Event): Option[T] = ChangeStreamEventListener.getChangeEvent(event) match {
+  def getTypedEvent[T](event: Event): Option[T] = ChangeStreamEventListener.getChangeEvent(event, event.getHeader[EventHeaderV4]) match {
     case Some(e: T) => Some(e)
     case _ => None
   }
@@ -209,12 +209,13 @@ class ChangeStreamEventListenerSpec extends Base with Config {
   "When receiving a XID event" should {
     "Emit a TransactionEvent(CommitTransaction..)" in {
       header.setEventType(XID)
+      header.setNextPosition(952)
       val data = new XidEventData()
       val event = new Event(header, data)
 
       ChangeStreamEventListener.onEvent(event)
 
-      getTypedEvent[TransactionEvent](event) should be(Some(CommitTransaction))
+      getTypedEvent[TransactionEvent](event) should be(Some(CommitTransaction(952)))
     }
   }
 
@@ -229,11 +230,12 @@ class ChangeStreamEventListenerSpec extends Base with Config {
     }
     "Emit a TransactionEvent(CommitTransaction..) for COMMIT query" in {
       header.setEventType(QUERY)
+      header.setNextPosition(952)
       val data = new QueryEventData()
       data.setSql("COMMIT")
       val event = new Event(header, data)
 
-      getTypedEvent[TransactionEvent](event) should be(Some(CommitTransaction))
+      getTypedEvent[TransactionEvent](event) should be(Some(CommitTransaction(952)))
     }
     "Emit a TransactionEvent(RollbackTransaction..) for ROLLBACK query" in {
       header.setEventType(QUERY)
