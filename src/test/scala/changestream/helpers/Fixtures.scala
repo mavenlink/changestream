@@ -160,7 +160,8 @@ object Fixtures {
                         sequenceNext: Long = 0,
                         database: String = "changestream_test",
                         tableName: String = "users",
-                        tableId: Int = 123
+                        tableId: Int = 123,
+                        position: Option[BinlogPosition] = None
                       ): (MutationWithInfo, Seq[ListMap[String, Any]], Seq[ListMap[String, Any]]) = {
     val (m, d, od) = mutation(mutationType, rowCount, rowsInTransaction, sequenceNext, database, tableName, tableId)
     (MutationWithInfo(
@@ -172,7 +173,8 @@ object Fixtures {
       columns = columns match {
         case true => Some(getColumnsInfo(database, tableName))
         case false => None
-      }
+      },
+      position = position
     ), d, od)
   }
 }
