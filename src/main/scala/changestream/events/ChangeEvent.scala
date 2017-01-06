@@ -22,16 +22,8 @@ sealed trait ChangeEvent
 sealed trait TransactionEvent extends ChangeEvent
 case object BeginTransaction extends TransactionEvent
 case class Gtid(gtid: String) extends TransactionEvent
-case object CommitTransaction extends TransactionEvent
+case class CommitTransaction(nextPosition: Long) extends TransactionEvent
 case object RollbackTransaction extends TransactionEvent
-
-sealed trait BinlogPosition
-case class GtidPosition(gtid: String) extends BinlogPosition {
-  override def toString = gtid
-}
-case class FilePosition(file: String, position: Long) extends BinlogPosition {
-  override def toString = s"$file:$position"
-}
 
 /** Represents an ALTER TABLE statement, created from QUERY
   * event in the binlog.
@@ -150,6 +142,14 @@ case class ColumnsInfo(
   * @param isPrimary Is this column the primary key (or part of a multi-column primary key)?
   */
 case class Column(name: String, dataType: String, isPrimary: Boolean)
+
+sealed trait BinlogPosition
+//case class GtidPosition(gtid: String) extends BinlogPosition {
+//  override def toString = gtid
+//}
+case class FilePosition(file: String, position: Long) extends BinlogPosition {
+  override def toString = s"$file:$position"
+}
 
 /** Contains a mutation event and all of its associated information.
   *
