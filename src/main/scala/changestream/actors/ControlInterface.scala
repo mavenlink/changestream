@@ -110,7 +110,7 @@ trait   ControlInterface extends HttpService with DefaultJsonProtocol {
       ChangeStream.serverName,
       ChangeStream.clientId,
       ChangeStream.isConnected,
-      ChangeStream.currentPosition.toString,
+      "TODO", //ChangeStream.currentPosition.toString,
       ChangestreamEventDeserializer.getCurrentSequenceNumber,
       MemoryInfo(
         Runtime.getRuntime().totalMemory(),
