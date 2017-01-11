@@ -14,7 +14,7 @@ import akka.pattern.{after, ask}
 import akka.io.IO
 import akka.util.Timeout
 import changestream.actors.ControlInterfaceActor
-import changestream.events.{BinlogPosition, FilePosition, GtidPosition}
+import changestream.events.{BinlogPosition, FilePosition}
 import spray.can.Http
 
 object ChangeStream extends App {
