@@ -45,7 +45,7 @@ class SnsJournalPlugin(config: Config) extends EmitterBase {
 
   protected def send(topic: String, message: String): Future[PublishResult] = {
     topicArns = topicArns.get(topic) match {
-      case Some(arn) => topicArns
+      case Some(_) => topicArns
       case None => topicArns + (topic -> client.createTopic(topic))
     }
 
