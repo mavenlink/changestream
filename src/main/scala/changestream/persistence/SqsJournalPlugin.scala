@@ -1,6 +1,5 @@
 package changestream.persistence
 
-import akka.actor.{Actor, ActorRef, Cancellable}
 import changestream.events.{MutationEvent, MutationWithInfo}
 import com.amazonaws.ClientConfiguration
 import com.amazonaws.services.sqs.AmazonSQSAsyncClient
@@ -10,10 +9,8 @@ import com.typesafe.config.Config
 import org.slf4j.LoggerFactory
 
 import scala.collection.immutable
-import scala.concurrent.{Await, Future, Promise}
+import scala.concurrent.Future
 import scala.util.{Failure, Success}
-import scala.concurrent.duration._
-import scala.language.postfixOps
 
 object SqsJournalPlugin {
   case class BatchResult(queued: Seq[String], failed: Seq[String])
@@ -71,7 +68,7 @@ class SqsJournalPlugin(config: Config) extends EmitterBase {
     request
   }
 
-//  //TODO
+//  //TODO http://alvinalexander.com/java/jwarehouse/akka-2.3/akka-persistence/src/main/resources/reference.conf.shtml
 //  protected def getMessageBatch: Seq[(String, String)] = {
 //    val batchId = Thread.currentThread.getId + "-" + System.nanoTime
 //    val messages = messageBuffer.zipWithIndex.map {
