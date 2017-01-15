@@ -43,7 +43,7 @@ class SqsJournalPlugin(config: Config) extends EmitterBase {
 
   override def asyncEmitPayload(persistenceId: String, payload: Any) = payload match {
     case MutationWithInfo(mutation, _, _, Some(message), _) =>
-      val topic = SqsJournalPlugin.getQueueName(mutation, persistenceId)
+      val topic = getQueueName(mutation, persistenceId)
       log.debug(s"Received message for topic '${topic}': ${message}")
       send(topic, message).map(_ => ())
     case _ =>
