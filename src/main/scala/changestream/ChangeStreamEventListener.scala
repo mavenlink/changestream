@@ -17,12 +17,15 @@ object ChangeStreamEventListener extends EventListener {
   protected val whitelist: java.util.List[String] = new java.util.LinkedList[String]()
   protected val blacklist: java.util.List[String] = new java.util.LinkedList[String]()
 
-  @volatile protected var emitterLoader: (ActorRefFactory => ActorRef) = (_ => system.actorOf(Props(new SnsActor()), name = "emitterActor"))
+  protected val binlogActor = system.actorOf(Props(new BinlogClient), name = "binlogActor")
+  protected val emitterCoordinator = system.actorOf(Props(new EmitterCoordinator(_ => binlogActor, getEmitterTopic)), name = "emitterCoordinator")
+  @volatile protected var emitterLoader: (ActorRefFactory => ActorRef) = (_ => emitterCoordinator)
+  @volatile protected var _emitterTopic: String = "firehose"
   @volatile protected var _currentBinlogFile: String = ""
 
-  protected lazy val formatterActor = system.actorOf(Props(new JsonFormatterActor(emitterLoader)), name = "formatterActor")
-  protected lazy val columnInfoActor = system.actorOf(Props(new ColumnInfoActor(_ => formatterActor)), name = "columnInfoActor")
-  protected lazy val transactionActor = system.actorOf(Props(new TransactionActor(_ => columnInfoActor)), name = "transactionActor")
+  protected val formatterActor = system.actorOf(Props(new JsonFormatterActor(emitterLoader)), name = "formatterActor")
+  protected val columnInfoActor = system.actorOf(Props(new ColumnInfoActor(_ => formatterActor)), name = "columnInfoActor")
+  protected val transactionActor = system.actorOf(Props(new TransactionActor(_ => columnInfoActor)), name = "transactionActor")
 
   setConfig(ConfigFactory.load().getConfig("changestream"))
 
@@ -44,23 +47,7 @@ object ChangeStreamEventListener extends EventListener {
       log.info(s"Using event blacklist: ${blacklist}")
     }
 
-    if(config.hasPath("emitter")) {
-      val classString = config.getString("emitter")
-
-      try {
-        val emitterConstructor = Class.forName(classString).asInstanceOf[Class[Actor]].getDeclaredConstructors.head
-        lazy val actorInstance = emitterConstructor.newInstance(config).asInstanceOf[Actor]
-        val actorRef = system.actorOf(Props(actorInstance), name = "emitterActor")
-        setEmitterLoader(_ => {
-          actorRef
-        })
-      }
-      catch {
-        case e: Exception =>
-          log.error(s"Couldn't load emitter class ${classString}.", e)
-          throw e
-      }
-    }
+    _emitterTopic = config.getString("emitter-topic")
   }
 
   /** Allows the emitter/producer actor to be configured at runtime.
@@ -71,6 +58,11 @@ object ChangeStreamEventListener extends EventListener {
     */
   def setEmitterLoader(loader: (ActorRefFactory => ActorRef)) = emitterLoader = loader
 
+  /**
+    * Lazy load the emitter topic (gets called after setconfig)
+    * @return
+    */
+  def getEmitterTopic = _emitterTopic
   def currentBinlogFile = _currentBinlogFile
 
   /**

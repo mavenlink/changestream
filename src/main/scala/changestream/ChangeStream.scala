@@ -83,7 +83,7 @@ object ChangeStream extends App {
   /** Register the object that will receive BinaryLogClient connection lifecycle events **/
   client.registerLifecycleListener(ChangeStreamLifecycleListener)
 
-  getConnected
+  //getConnected
 
   def serverName = s"${mysqlHost}:${mysqlPort}"
   def clientId = client.getServerId
@@ -144,7 +144,7 @@ object ChangeStream extends App {
     Await.result(system.whenTerminated, 60 seconds)
   }
 
-  protected def getConnected = {
+  def getConnected = {
     /** Finally, signal the BinaryLogClient to start processing events **/
     log.info(s"Starting changestream...")
     while(!isPaused && !client.isConnected) {

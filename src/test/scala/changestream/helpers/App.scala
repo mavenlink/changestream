@@ -23,7 +23,7 @@ class App extends Database with Config with Eventually with IntegrationPatience 
   }
 
   override def beforeAll(): Unit = {
-    ChangeStreamEventListener.setEmitterLoader(_ => probe.ref)
+    //ChangeStreamEventListener.setEmitterLoader(_ => probe.ref)
     initialize
     ConfigFactory.invalidateCaches()
     app.start()

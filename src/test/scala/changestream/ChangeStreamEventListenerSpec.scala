@@ -197,29 +197,29 @@ class ChangeStreamEventListenerSpec extends Base with Config {
     }
   }
 
-  "When a custom emitter is specified in the config" should {
-    "use that emitter" in {
-      val emitterConfig = ConfigFactory
-        .parseString("changestream.emitter = \"changestream.actors.StdoutActor\"")
-        .withFallback(testConfig)
-        .getConfig("changestream")
-
-      ChangeStreamEventListener.setConfig(emitterConfig)
-    }
-  }
-
-  "When an invalid custom emitter is specified in the config" should {
-    "use that emitter" in {
-      val emitterConfig = ConfigFactory
-        .parseString("changestream.emitter = \"changestream.actors.BlahActor\"")
-        .withFallback(testConfig)
-        .getConfig("changestream")
-
-      assertThrows[Exception] {
-        ChangeStreamEventListener.setConfig(emitterConfig)
-      }
-    }
-  }
+//  "When a custom emitter is specified in the config" should {
+//    "use that emitter" in {
+//      val emitterConfig = ConfigFactory
+//        .parseString("changestream.emitter = \"changestream.actors.StdoutActor\"")
+//        .withFallback(testConfig)
+//        .getConfig("changestream")
+//
+//      ChangeStreamEventListener.setConfig(emitterConfig)
+//    }
+//  }
+//
+//  "When an invalid custom emitter is specified in the config" should {
+//    "use that emitter" in {
+//      val emitterConfig = ConfigFactory
+//        .parseString("changestream.emitter = \"changestream.actors.BlahActor\"")
+//        .withFallback(testConfig)
+//        .getConfig("changestream")
+//
+//      assertThrows[Exception] {
+//        ChangeStreamEventListener.setConfig(emitterConfig)
+//      }
+//    }
+//  }
 
   "When receiving a XID event" should {
     "Emit a TransactionEvent(CommitTransaction..)" in {
