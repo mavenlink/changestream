@@ -1,5 +1,6 @@
 package changestream
 
+import scala.reflect.ClassTag
 import changestream.helpers.{Base, Config}
 import com.github.shyiko.mysql.binlog.event._
 import com.github.shyiko.mysql.binlog.event.EventType._
@@ -9,7 +10,7 @@ import changestream.events._
 import com.typesafe.config.ConfigFactory
 
 class ChangeStreamEventListenerSpec extends Base with Config {
-  def getTypedEvent[T](event: Event): Option[T] = ChangeStreamEventListener.getChangeEvent(event) match {
+  def getTypedEvent[T: ClassTag](event: Event): Option[T] = ChangeStreamEventListener.getChangeEvent(event) match {
     case Some(e: T) => Some(e)
     case _ => None
   }

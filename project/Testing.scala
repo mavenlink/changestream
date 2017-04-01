@@ -44,7 +44,7 @@ object Testing {
 
   lazy val settings = testSettings ++ itSettings ++ benchSettings ++ Seq(
     libraryDependencies ++= Dependencies.testDependencies,
-    testAll <<= (test in Benchmark).dependsOn((test in IntegrationTest).dependsOn(test in Test))
+    testAll := (test in Benchmark).dependsOn((test in IntegrationTest).dependsOn(test in Test)).value
   )
 
   lazy val configs = Seq(
