@@ -127,6 +127,8 @@ trait   ControlInterface extends HttpService with DefaultJsonProtocol {
     NewRelic.recordMetric("memoryInfo.heapSize", status.memoryInfo.heapSize)
     NewRelic.recordMetric("memoryInfo.maxHeap", status.memoryInfo.maxHeap)
     NewRelic.recordMetric("memoryInfo.freeHeap", status.memoryInfo.freeHeap)
+
+    status
   }
 }
 
