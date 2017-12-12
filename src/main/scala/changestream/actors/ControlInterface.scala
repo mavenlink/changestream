@@ -107,7 +107,7 @@ trait   ControlInterface extends HttpService with DefaultJsonProtocol {
     }
   }
 
-  def getStatus = {
+  def getStatus:Status = {
     val status = Status(
       ChangeStream.serverName,
       ChangeStream.clientId,
