@@ -16,6 +16,8 @@ import com.github.mauricio.async.db.pool.{ConnectionPool, PoolConfiguration}
 
 import scala.util.{Failure, Success}
 
+import com.newrelic.api.agent.Trace
+
 object ColumnInfoActor {
   val COLUMN_NAME = 0
   val DATA_TYPE = 1
@@ -58,6 +60,7 @@ class ColumnInfoActor (
   protected val columnsInfoCache = mutable.HashMap.empty[(String, String), ColumnsInfo]
   protected val mutationBuffer = mutable.HashMap.empty[(String, String), List[PendingMutation]]
 
+  @Trace (dispatcher=true)
   override def preStart() = {
     val connectRequest = pool.connect
 
@@ -79,6 +82,7 @@ class ColumnInfoActor (
     Await.result(pool.disconnect, TIMEOUT milliseconds)
   }
 
+  @Trace (dispatcher=true)
   def receive = {
     case event: MutationWithInfo =>
       log.debug(s"Received mutation event on table ${event.mutation.cacheKey}")
@@ -122,6 +126,7 @@ class ColumnInfoActor (
       requestColumnInfo(getNextSchemaSequence, alter.database, alter.tableName)
   }
 
+  @Trace
   protected def requestColumnInfo(schemaSequence: Long, database: String, tableName: String) = {
     getColumnsInfo(schemaSequence, database, tableName) recover {
       case exception =>
@@ -133,6 +138,7 @@ class ColumnInfoActor (
     }
   }
 
+  @Trace
   protected def getColumnsInfo(schemaSequence: Long, database: String, tableName: String): Future[Option[ColumnsInfo]] = {
     val escapedDatabase = database.replace("'", "\\'")
     val escapedTableName = tableName.replace("'", "\\'")
@@ -160,6 +166,7 @@ class ColumnInfoActor (
       })
   }
 
+  @Trace
   protected def preLoadColumnData = {
     if (!preloadDatabases.isEmpty) {
       val request = for {
@@ -177,6 +184,7 @@ class ColumnInfoActor (
     }
   }
 
+  @Trace
   protected def getAllColumnsInfo: Future[Iterable[ColumnsInfo]] = {
     val databases = preloadDatabases.replace("'", "\'").split(",").mkString("','")
 

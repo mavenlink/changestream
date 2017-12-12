@@ -129,6 +129,35 @@ jobs:
       - store_artifacts:
           path: /tmp/circle
 
+  deploy_newrelic:
+    <<: *defaults
+    docker:
+      - image: mavenlink/changestream-build:20170809c
+    steps:
+      - attach_workspace:
+          at: /root
+      - run:
+          name: Build Debian Package
+          command: |
+            sbt debian:packageBin
+            mkdir -p /tmp/circle/
+            cp /root/current/target/*.deb /tmp/circle/
+      - setup_remote_docker
+      - run:
+          name: Build Docker Image
+          command:  |
+            sbt docker
+            mkdir -p /tmp/circle/
+            cp /root/current/target/docker/Dockerfile /tmp/circle/
+      - deploy:
+          name: Deploy to DockerHub
+          command: |
+            docker login -u $DOCKER_USER -p $DOCKER_PASS
+            docker tag mavenlink/changestream mavenlink/changestream:newrelic-$CIRCLE_SHA1
+            docker push mavenlink/changestream:newrelic-$CIRCLE_SHA1
+      - store_artifacts:
+          path: /tmp/circle
+
 workflows:
   version: 2
   build_test_deploy:
@@ -147,6 +176,14 @@ workflows:
           filters:
             branches:
               only: master
+          requires:
+            - unit-tests
+            - integration-tests
+            - integration-tests-gtid
+      - deploy_newrelic:
+          filters:
+            branches:
+              only: newrelic
           requires:
             - unit-tests
             - integration-tests

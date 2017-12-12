@@ -13,6 +13,8 @@ import org.slf4j.LoggerFactory
 import scala.collection.mutable
 import scala.concurrent.Future
 
+import com.newrelic.api.agent.Trace
+
 object SnsActor {
   def getTopic(mutation: MutationEvent, topic: String, topicHasVariable: Boolean = true): String = {
     val database = mutation.database.replaceAll("[^a-zA-Z0-9\\-_]", "-")
@@ -42,6 +44,7 @@ class SnsActor(config: Config = ConfigFactory.load().getConfig("changestream")) 
   )
   protected val topicArns = mutable.HashMap.empty[String, Future[CreateTopicResult]]
 
+  @Trace (dispatcher=true)
   def receive = {
     case MutationWithInfo(mutation, _, _, Some(message: String)) =>
       log.debug(s"Received message: ${message}")

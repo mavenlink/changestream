@@ -19,6 +19,8 @@ import org.slf4j.LoggerFactory
 
 import scala.concurrent.{Await, Future}
 
+import com.newrelic.api.agent.Trace
+
 object S3Actor {
   case class FlushRequest(origSender: ActorRef)
 }
@@ -61,6 +63,7 @@ class S3Actor(config: Config = ConfigFactory.load().getConfig("changestream")) e
   // End Mutable State!!
 
   // Wrap the Java IO
+  @Trace
   protected def getNextFile = BUFFER_TEMP_DIR match {
     case "" =>
       File.createTempFile("-buffer", ".json")
@@ -70,11 +73,14 @@ class S3Actor(config: Config = ConfigFactory.load().getConfig("changestream")) e
       log.error(s"Failed to write to buffer directory ${bufferDirectory}, make sure it exists and is writeable. Using the system default temp dir instead.")
       File.createTempFile("-buffer", ".json")
   }
+
+  @Trace
   protected def getWriterForFile = {
     val streamWriter = new OutputStreamWriter(new FileOutputStream(bufferFile), StandardCharsets.UTF_8)
     new BufferedWriter(streamWriter)
   }
 
+  @Trace
   protected def bufferMessage(message: String) = {
     bufferWriter.write(message)
     bufferWriter.newLine()
@@ -88,6 +94,7 @@ class S3Actor(config: Config = ConfigFactory.load().getConfig("changestream")) e
     metadata
   }
 
+  @Trace
   protected def getMessageBatch = {
     val batchFile = bufferFile
 
@@ -136,6 +143,7 @@ class S3Actor(config: Config = ConfigFactory.load().getConfig("changestream")) e
     client.shutdown()
   }
 
+  @Trace (dispatcher=true)
   def receive = {
     case MutationWithInfo(mutation, _, _, Some(message: String)) =>
       log.debug(s"Received message: ${message}")
@@ -152,6 +160,7 @@ class S3Actor(config: Config = ConfigFactory.load().getConfig("changestream")) e
       flush(origSender)
   }
 
+  @Trace (dispatcher=true)
   protected def flush(origSender: ActorRef) = {
     log.debug(s"Flushing ${currentBatchSize} messages to S3.")
 

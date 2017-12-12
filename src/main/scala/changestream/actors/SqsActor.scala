@@ -15,6 +15,8 @@ import org.slf4j.LoggerFactory
 import collection.JavaConverters._
 import scala.concurrent.Await
 
+import com.newrelic.api.agent.Trace
+
 object SqsActor {
   case class FlushRequest(origSender: ActorRef)
   case class BatchResult(queued: Seq[String], failed: Seq[String])
@@ -39,6 +41,7 @@ class SqsActor(config: Config = ConfigFactory.load().getConfig("changestream")) 
   protected def cancelDelayedFlush = cancellableSchedule.foreach(_.cancel())
 
   protected val messageBuffer = mutable.ArrayBuffer.empty[String]
+  @Trace
   protected def getMessageBatch: Seq[(String, String)] = {
     val batchId = Thread.currentThread.getId + "-" + System.nanoTime
     val messages = messageBuffer.zipWithIndex.map {
@@ -71,6 +74,7 @@ class SqsActor(config: Config = ConfigFactory.load().getConfig("changestream")) 
   }
   override def postStop() = cancelDelayedFlush
 
+  @Trace (dispatcher=true)
   def receive = {
     case MutationWithInfo(mutation, _, _, Some(message: String)) =>
       log.debug(s"Received message: ${message}")
@@ -87,6 +91,7 @@ class SqsActor(config: Config = ConfigFactory.load().getConfig("changestream")) 
       flush(origSender)
   }
 
+  @Trace (dispatcher=true)
   protected def flush(origSender: ActorRef) = {
     log.debug(s"Flushing ${messageBuffer.length} messages to SQS.")
 
