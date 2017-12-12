@@ -27,7 +27,9 @@ object Dependencies {
     "com.amazonaws" % "aws-java-sdk-sqs" % awsVersion,
     "com.amazonaws" % "aws-java-sdk-sns" % awsVersion,
     "com.amazonaws" % "aws-java-sdk-s3" % awsVersion,
-    "com.github.dwhjames" %% "aws-wrap" % "0.12.1"
+    "com.github.dwhjames" %% "aws-wrap" % "0.12.1",
+    // newrelic
+    "com.newrelic.agent.java" % "newrelic-api" % "3.45.0"
   )
 
   val testDependencies = Seq(

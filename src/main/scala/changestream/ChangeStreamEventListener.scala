@@ -9,6 +9,8 @@ import com.github.shyiko.mysql.binlog.event.EventType._
 import org.slf4j.LoggerFactory
 import com.typesafe.config.Config
 
+import com.newrelic.api.agent.Trace
+
 object ChangeStreamEventListener extends EventListener {
   protected val log = LoggerFactory.getLogger(getClass)
   protected val system = ActorSystem("changestream")
@@ -71,6 +73,7 @@ object ChangeStreamEventListener extends EventListener {
     *
     * @param binaryLogEvent The binlog event
     */
+  @Trace (dispatcher=true)
   def onEvent(binaryLogEvent: Event) = {
     log.debug(s"Received event: ${binaryLogEvent}")
     val changeEvent = getChangeEvent(binaryLogEvent)
@@ -89,6 +92,7 @@ object ChangeStreamEventListener extends EventListener {
     * @param event The java binlog listener event
     * @return The resulting ChangeEvent
     */
+  @Trace
   def getChangeEvent(event: Event): Option[ChangeEvent] = {
     val header = event.getHeader[EventHeaderV4]
 
@@ -125,6 +129,7 @@ object ChangeStreamEventListener extends EventListener {
     }
   }
 
+  @Trace
   protected def getMutationEvent(event: Event, header: EventHeaderV4): Option[MutationEvent] = {
     val mutation = header.getEventType match {
       case e if EventType.isWrite(e) =>
@@ -152,6 +157,7 @@ object ChangeStreamEventListener extends EventListener {
     * @param queryData The QUERY event data
     * @return
     */
+  @Trace
   protected def parseQueryEvent(queryData: QueryEventData): Option[ChangeEvent] = {
     queryData.getSql match {
       case sql if sql matches "(?i)^begin" =>

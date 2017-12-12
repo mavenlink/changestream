@@ -11,6 +11,8 @@ import org.slf4j.LoggerFactory
 import spray.json._
 import DefaultJsonProtocol._
 
+import com.newrelic.api.agent.Trace
+
 object EncryptorActor {
   case class Plaintext(message: JsObject)
   case class Ciphertext(message: JsObject)
@@ -40,6 +42,7 @@ class EncryptorActor (
     decryptEngine.init(Cipher.DECRYPT_MODE, originalKey)
   }
 
+  @Trace (dispatcher=true)
   def receive = {
     case Plaintext(message) =>
       val result = encryptFields(message)
@@ -50,6 +53,7 @@ class EncryptorActor (
       sender() ! result
   }
 
+  @Trace
   private def encryptFields(message: JsObject, jsonPath: String = ""): JsObject = {
     JsObject(
       message.fields.map({
@@ -66,6 +70,7 @@ class EncryptorActor (
     )
   }
 
+  @Trace
   private def decryptFields(message: JsObject, jsonPath: String = ""): JsObject = {
     JsObject(
       message.fields.map({

@@ -12,6 +12,8 @@ import spray.json.DefaultJsonProtocol
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
+import com.newrelic.api.agent.{Trace, NewRelic}
+
 class ControlInterfaceActor extends Actor with ControlInterface {
   def actorRefFactory = context
   def receive = runRoute(controlRoutes)
@@ -106,7 +108,7 @@ trait   ControlInterface extends HttpService with DefaultJsonProtocol {
   }
 
   def getStatus = {
-    Status(
+    val status = Status(
       ChangeStream.serverName,
       ChangeStream.clientId,
       ChangeStream.isConnected,
@@ -118,6 +120,13 @@ trait   ControlInterface extends HttpService with DefaultJsonProtocol {
         Runtime.getRuntime().freeMemory()
       )
     )
+
+    NewRelic.addCustomParameter("binlogPosition", status.binlogPosition)
+    NewRelic.recordMetric("isConnected", status.isConnected match { case true => 1 case false => 0})
+    NewRelic.recordMetric("sequenceNumber", status.sequenceNumber)
+    NewRelic.recordMetric("memoryInfo.heapSize", status.memoryInfo.heapSize)
+    NewRelic.recordMetric("memoryInfo.maxHeap", status.memoryInfo.maxHeap)
+    NewRelic.recordMetric("memoryInfo.freeHeap", status.memoryInfo.freeHeap)
   }
 }
 

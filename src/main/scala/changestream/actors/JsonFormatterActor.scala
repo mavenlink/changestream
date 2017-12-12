@@ -18,6 +18,8 @@ import scala.concurrent.duration._
 import scala.language.postfixOps
 import scala.collection.immutable.ListMap
 
+import com.newrelic.api.agent.Trace
+
 object JsonFormatterActor {
   val dateFormatter: DateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'")
   dateFormatter.setTimeZone(TimeZone.getTimeZone("UTC"))
@@ -103,6 +105,7 @@ class JsonFormatterActor (
   protected implicit val TIMEOUT = Timeout(config.getLong("encryptor.timeout") milliseconds)
   protected implicit val ec = context.dispatcher
 
+  @Trace (dispatcher=true)
   def receive = {
     case message: MutationWithInfo if message.columns.isDefined => {
       log.debug(s"Received ${message.mutation} for table ${message.mutation.database}.${message.mutation.tableName}")
@@ -145,11 +148,13 @@ class JsonFormatterActor (
     }
   }
 
+  @Trace
   protected def getJsonString(v: JsValue) = prettyPrint match {
     case true => v.prettyPrint
     case false => v.compactPrint
   }
 
+  @Trace
   protected def getRowData(message: MutationWithInfo) = {
     val columns = message.columns.get.columns
     val mutation = message.mutation
@@ -164,6 +169,7 @@ class JsonFormatterActor (
     )
   }
 
+  @Trace
   protected def getOldRowData(message: MutationWithInfo) = {
     val columns = message.columns.get.columns
     val mutation = message.mutation
@@ -182,6 +188,7 @@ class JsonFormatterActor (
     }
   }
 
+  @Trace
   protected def transactionInfo(message: MutationWithInfo, rowOffset: Long, rowsTotal: Long): ListMap[String, JsValue] = {
     message.transaction match {
       case Some(txn) => ListMap(
@@ -199,6 +206,7 @@ class JsonFormatterActor (
     }
   }
 
+  @Trace
   protected def getJsonHeader(
                               message: MutationWithInfo,
                               pkInfo: ListMap[String, JsValue],
@@ -221,11 +229,13 @@ class JsonFormatterActor (
     )
   }
 
+  @Trace
   protected def getJsonRowData(rowData: ListMap[String, JsValue]): ListMap[String, JsValue] = includeData match {
     case true => ListMap("row_data" -> JsObject(rowData))
     case false => ListMap.empty
   }
 
+  @Trace
   protected def updateInfo(oldRowData: Option[ListMap[String, JsValue]]): ListMap[String, JsValue] = includeData match {
     case true => oldRowData.map({ row => ListMap("old_row_data" -> JsObject(row)) }).getOrElse(ListMap.empty)
     case false => ListMap.empty

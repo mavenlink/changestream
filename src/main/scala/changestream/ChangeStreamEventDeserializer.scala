@@ -8,6 +8,8 @@ import com.github.shyiko.mysql.binlog.event._
 import com.github.shyiko.mysql.binlog.event.deserialization._
 import com.github.shyiko.mysql.binlog.io.ByteArrayInputStream
 
+import com.newrelic.api.agent.Trace
+
 object ChangestreamEventDeserializer extends {
   val tableMapData = new util.HashMap[java.lang.Long, TableMapEventData]
   private val _deserializers = new util.IdentityHashMap[EventType, EventDataDeserializer[_ <: EventData]]
@@ -47,6 +49,7 @@ class InsertDeserializer(
   private val internalDeserializer = new WriteRowsEventDataDeserializer(tableMap).
     setMayContainExtraInformation(mayContainExtraInformation)
 
+  @Trace
   override def deserialize(inputStream: ByteArrayInputStream): Insert = {
     val result = internalDeserializer.deserialize(inputStream)
     val rows = result.getRows.asScala.toList
@@ -70,6 +73,7 @@ class UpdateDeserializer(
   private val internalDeserializer = new UpdateRowsEventDataDeserializer(tableMap).
     setMayContainExtraInformation(mayContainExtraInformation)
 
+  @Trace
   override def deserialize(inputStream: ByteArrayInputStream): Update = {
     val result = internalDeserializer.deserialize(inputStream)
     // pre-processing so that we can implement a consistent interface for "rows" across all mutation types
@@ -96,6 +100,7 @@ class DeleteDeserializer(
   private val internalDeserializer = new DeleteRowsEventDataDeserializer(tableMap).
     setMayContainExtraInformation(mayContainExtraInformation)
 
+  @Trace
   override def deserialize(inputStream: ByteArrayInputStream): Delete = {
     val result = internalDeserializer.deserialize(inputStream)
     val rows = result.getRows.asScala.toList
@@ -113,6 +118,7 @@ class DeleteDeserializer(
 }
 
 object RowsQueryDeserializer extends EventDataDeserializer[EventData] {
+  @Trace
   override def deserialize(inputStream: ByteArrayInputStream) = {
     inputStream.skip(1)
     val len = inputStream.available()

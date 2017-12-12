@@ -9,6 +9,8 @@ import collection.mutable
 import changestream.events._
 import org.slf4j.LoggerFactory
 
+import com.newrelic.api.agent.Trace
+
 class TransactionActor(getNextHop: ActorRefFactory => ActorRef) extends Actor {
   protected val log = LoggerFactory.getLogger(getClass)
   protected val nextHop = getNextHop(context)
@@ -18,6 +20,7 @@ class TransactionActor(getNextHop: ActorRefFactory => ActorRef) extends Actor {
   protected var currentGtid: Option[String] = None
   protected var previousMutation: Option[MutationWithInfo] = None
 
+  @Trace (dispatcher=true)
   def receive = {
     case BeginTransaction =>
       log.debug(s"Received BeginTransacton")
