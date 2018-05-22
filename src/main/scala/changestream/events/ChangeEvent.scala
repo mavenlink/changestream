@@ -97,7 +97,7 @@ case class Update(
 case class Delete(
                    tableId: Long,
                    includedColumns: util.BitSet,
-                   rows: List[Array[java.io.Serializable]],
+                   oldRows: List[Array[java.io.Serializable]],
                    database: String = "",
                    tableName: String = "",
                    sql: Option[String] = None,
