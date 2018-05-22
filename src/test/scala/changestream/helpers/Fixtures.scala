@@ -111,7 +111,15 @@ object Fixtures {
 
     val mutation = mutationType match {
       case "insert" => {
-        Insert(tableId, includedColumns, rawBinlogData(rowsData), database, tableName, Some(insertSql(getColumnsInfo(database, tableName), rowsData)), sequenceNext, timestamp)
+        Insert(tableId,
+          includedColumns,
+          rawBinlogData(rowsData),
+          database,
+          tableName,
+          Some(insertSql(getColumnsInfo(database, tableName), rowsData)),
+          sequenceNext,
+          timestamp
+        )
       }
       case "update" => {
         Update(
@@ -127,7 +135,16 @@ object Fixtures {
           timestamp)
       }
       case "delete" => {
-        Delete(tableId, includedColumns, rawBinlogData(rowsData), database, tableName, Some(deleteSql(getColumnsInfo(database, tableName))), sequenceNext, timestamp)
+        Delete(
+          tableId,
+          includedColumns,
+          rawBinlogData(rowsData),
+          database,
+          tableName,
+          Some(deleteSql(getColumnsInfo(database, tableName))),
+          sequenceNext,
+          timestamp
+        )
       }
     }
 
