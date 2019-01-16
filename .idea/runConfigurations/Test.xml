@@ -1,17 +1,49 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Test" type="ScalaTestRunConfiguration" factoryName="ScalaTest" singleton="true" show_console_on_std_out="true" show_console_on_std_err="true">
-    <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea" />
+  <configuration default="false" name="Test" type="ScalaTestRunConfiguration" factoryName="ScalaTest" singleton="true" show_console_on_std_err="true" show_console_on_std_out="true">
     <module name="changestream" />
-    <setting name="path" value="changestream.actors.SqsActorSpec" />
-    <setting name="package" value="" />
+    <setting name="path" value="" />
     <setting name="vmparams" value="-Xms512M -Xmx1024M -Xss1M -XX:+CMSClassUnloadingEnabled" />
     <setting name="params" value="" />
     <setting name="workingDirectory" value="file://$PROJECT_DIR$" />
     <setting name="searchForTest" value="In single module" />
-    <setting name="testName" value="" />
-    <setting name="testKind" value="All in package" />
     <setting name="showProgressMessages" value="true" />
+    <setting name="useSbt" value="false" />
+    <setting name="useUiWithSbt" value="false" />
     <envs />
-    <method />
+    <setting name="testKind" value="All in package" />
+    <setting name="package" value="" />
+    <buffered bufClass="changestream.ChangeStreamEventListenerSpec" />
+    <buffered bufClass="changestream.ChangeStreamEventListenerSpec" />
+    <buffered bufClass="changestream.ChangeStreamISpec" />
+    <buffered bufClass="changestream.ChangeStreamISpec" />
+    <buffered bufClass="changestream.RowsQueryDeserializerSpec" />
+    <buffered bufClass="changestream.RowsQueryDeserializerSpec" />
+    <buffered bufClass="changestream.actors.ColumnInfoActorSpec" />
+    <buffered bufClass="changestream.actors.ColumnInfoActorSpec" />
+    <buffered bufClass="changestream.actors.EncryptorActorSpec" />
+    <buffered bufClass="changestream.actors.EncryptorActorSpec" />
+    <buffered bufClass="changestream.actors.JsonFormatterActorSpec" />
+    <buffered bufClass="changestream.actors.JsonFormatterActorSpec" />
+    <buffered bufClass="changestream.actors.PositionSaverSpec" />
+    <buffered bufClass="changestream.actors.PositionSaverSpec" />
+    <buffered bufClass="changestream.actors.PubSubActorSpec" />
+    <buffered bufClass="changestream.actors.PubSubActorSpec" />
+    <buffered bufClass="changestream.actors.S3ActorSpec" />
+    <buffered bufClass="changestream.actors.S3ActorSpec" />
+    <buffered bufClass="changestream.actors.SnsActorSpec" />
+    <buffered bufClass="changestream.actors.SnsActorSpec" />
+    <buffered bufClass="changestream.actors.SqsActorSpec" />
+    <buffered bufClass="changestream.actors.SqsActorSpec" />
+    <buffered bufClass="changestream.actors.StdoutActorSpec" />
+    <buffered bufClass="changestream.actors.StdoutActorSpec" />
+    <buffered bufClass="changestream.actors.TransactionActorSpec" />
+    <buffered bufClass="changestream.actors.TransactionActorSpec" />
+    <buffered bufClass="changestream.helpers.Base" />
+    <buffered bufClass="changestream.helpers.Base" />
+    <buffered bufClass="changestream.helpers.Emitter" />
+    <buffered bufClass="changestream.helpers.Emitter" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
   </configuration>
 </component>

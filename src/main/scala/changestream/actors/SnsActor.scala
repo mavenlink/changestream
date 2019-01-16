@@ -4,7 +4,8 @@ import scala.language.postfixOps
 import scala.util.{Failure, Success}
 import akka.actor.{Actor, ActorRef, ActorRefFactory}
 import changestream.actors.PositionSaver.EmitterResult
-import changestream.events.{MutationEvent, MutationWithInfo}
+import changestream.events.MutationWithInfo
+import changestream.helpers.Topic
 import com.amazonaws.services.sns.AmazonSNSAsyncClient
 import com.amazonaws.services.sns.model.CreateTopicResult
 import com.github.dwhjames.awswrap.sns.AmazonSNSScalaClient
@@ -14,17 +15,6 @@ import kamon.Kamon
 
 import scala.collection.mutable
 import scala.concurrent.Future
-
-object SnsActor {
-  def getTopic(mutation: MutationEvent, topic: String, topicHasVariable: Boolean = true): String = {
-    val database = mutation.database.replaceAll("[^a-zA-Z0-9\\-_]", "-")
-    val tableName = mutation.tableName.replaceAll("[^a-zA-Z0-9\\-_]", "-")
-    topicHasVariable match {
-      case true => topic.replace("{database}", database).replace("{tableName}", tableName)
-      case false => topic
-    }
-  }
-}
 
 class SnsActor(getNextHop: ActorRefFactory => ActorRef,
                config: Config = ConfigFactory.load().getConfig("changestream")) extends Actor {
@@ -77,7 +67,7 @@ class SnsActor(getNextHop: ActorRefFactory => ActorRef,
       log.debug("Received message of size {}", message.length)
       log.trace("Received message: {}", message)
 
-      val topic = SnsActor.getTopic(mutation, snsTopic, snsTopicHasVariable)
+      val topic = Topic.getTopic(mutation, snsTopic, snsTopicHasVariable)
       val topicArn = topicArns.getOrElse(topic, getOrCreateTopic(topic))
       topicArns.update(topic, topicArn)
 
