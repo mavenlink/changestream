@@ -231,11 +231,11 @@ class JsonFormatterActor (
                               rowsTotal: Long
                              ): ListMap[String, JsValue] = {
     ListMap(
-      "mutation" -> JsString(message.mutation.toString),
+      "mutation_name" -> JsString(message.mutation.toString),
       "sequence" -> JsNumber(message.mutation.sequence + currentRow),
-      "database" -> JsString(message.mutation.database),
-      "table" -> JsString(message.mutation.tableName),
-      "query" -> JsObject(
+      "database_name" -> JsString(message.mutation.database),
+      "table_name" -> JsString(message.mutation.tableName),
+      "query_data" -> JsObject(
         "timestamp" -> JsNumber(message.mutation.timestamp),
         "sql" -> JsString(message.mutation.sql.getOrElse("")),
         "row_count" -> JsNumber(rowsTotal),
