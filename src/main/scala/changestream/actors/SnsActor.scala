@@ -89,7 +89,7 @@ class SnsActor(getNextHop: ActorRefFactory => ActorRef,
         case Success(result) =>
           inFlightMetric.decrement()
 
-          log.debug(s"Successfully published message to ${topic} (messageId ${result.getMessageId})")
+          log.info(s"Successfully published message to ${topic} (messageId ${result.getMessageId})")
           successMetric.increment()
           nextHop ! EmitterResult(pos)
         case Failure(exception) =>

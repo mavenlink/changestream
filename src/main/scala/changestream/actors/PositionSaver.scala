@@ -85,7 +85,7 @@ class PositionSaver(config: Config = ConfigFactory.load().getConfig("changestrea
       val saverWriter = new OutputStreamWriter(saverOutputStream, StandardCharsets.UTF_8)
       saverWriter.write(position match {
         case None => "" //TODO none and empty string mean the same thing right now. Is this cool?
-        case Some(str) => str
+        case Some(str) => ""
       })
       saverWriter.close()
       log.trace("Save success at {}", position)
