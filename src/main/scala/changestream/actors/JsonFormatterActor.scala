@@ -3,6 +3,7 @@ package changestream.actors
 import java.text.{DateFormat, SimpleDateFormat}
 import java.util
 import java.util.TimeZone
+import java.nio.charset.StandardCharsets;
 
 import akka.actor.{Actor, ActorRef, ActorRefFactory, Props}
 import akka.pattern.{ask, pipe}
@@ -81,7 +82,9 @@ object JsonFormatterActor {
       JsNumber(v.longValue)
     case null => //scalastyle:ignore
       JsNull
-
+    case byte: Array[Byte] =>  // This adds support for TEXT and blobs
+      val value = new String(byte, StandardCharsets.UTF_8)
+      JsString(value)
     // unknown/unsupported data type
     case _ =>
       None
