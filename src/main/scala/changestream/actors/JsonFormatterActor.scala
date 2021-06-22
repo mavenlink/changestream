@@ -83,8 +83,13 @@ object JsonFormatterActor {
     case null => //scalastyle:ignore
       JsNull
     case byte: Array[Byte] =>  // This adds support for TEXT and blobs
-      val value = new String(byte, StandardCharsets.UTF_8)
-      JsString(value)
+      try {
+        val value = new String(byte, StandardCharsets.UTF_8)
+        JsString(value)
+      } catch {
+        case e:Exception =>
+          None
+      }
     // unknown/unsupported data type
     case _ =>
       None
