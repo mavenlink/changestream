@@ -405,5 +405,17 @@ class ChangeStreamEventListenerSpec extends Base with Config {
       alter.database should be("database")
       alter.tableName should be("tbl_name")
     }
+
+    "Exclude those on the blacklist" in {
+      val blacklistConfig = ConfigFactory
+        .parseString("changestream.blacklist = \"database.blocked_table_name\"")
+        .withFallback(testConfig)
+        .getConfig("changestream")
+
+      ChangeStreamEventListener.setConfig(blacklistConfig)
+
+      data.setSql("ALTER TABLE database.\"blocked_table_name\"")
+      getTypedEvent[AlterTableEvent](new Event(header, data)) should be(None)
+    }
   }
 }
