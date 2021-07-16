@@ -5,7 +5,7 @@ defaults: &defaults
   docker:
     - image: mavenlink/changestream-build:20170809c
     - image: mysql/mysql-server:5.7
-      command: [mysqld, --character-set-server=utf8mb4, --collation-server=utf8mb4_unicode_ci, --log-bin=mysql-bin, --binlog_format=row, --binlog_rows_query_log_events, --server-id=952, --expire_logs_days=1]
+      command: [mysqld, --character-set-server=utf8mb4, --collation-server=utf8mb4_unicode_ci, --log-bin=mysql-bin, --binlog_format=row, --binlog_rows_query_log_events, --server-id=952, --expire_logs_days=1, --log-error]
       environment:
         MYSQL_ROOT_PASSWORD: "password"
         MYSQL_ROOT_HOST: "%"
@@ -90,7 +90,7 @@ jobs:
     docker:
       - image: mavenlink/changestream-build:20170809c
       - image: mysql/mysql-server:5.7
-        command: [mysqld, --character-set-server=utf8mb4, --collation-server=utf8mb4_unicode_ci, --log-bin=mysql-bin, --gtid_mode=on, --log-slave-updates, --enforce-gtid-consistency, --binlog_format=row, --binlog_rows_query_log_events, --server-id=952, --expire_logs_days=1]
+        command: [mysqld, --character-set-server=utf8mb4, --collation-server=utf8mb4_unicode_ci, --log-bin=mysql-bin, --gtid_mode=on, --log-slave-updates, --enforce-gtid-consistency, --binlog_format=row, --binlog_rows_query_log_events, --server-id=952, --expire_logs_days=1, --log-error]
         environment:
           MYSQL_ROOT_PASSWORD: "password"
           MYSQL_ROOT_HOST: "%"
