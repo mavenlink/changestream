@@ -397,11 +397,11 @@ object ChangeStreamEventListener extends EventListener {
             })
         }
 
-        maybeIdentifier.map({
-          case (db, table) => Some(AlterTableEvent(db.toLowerCase, table.toLowerCase, sql))
-        }).getOrElse(
-          None
-        )
+        maybeIdentifier.flatMap {
+          case (db, table) if !tableInBlacklist(db.toLowerCase, table.toLowerCase) =>
+            Some(AlterTableEvent(db.toLowerCase, table.toLowerCase, sql))
+          case _ => None
+        }
       case sql =>
         None
     }
