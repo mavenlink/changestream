@@ -1,5 +1,7 @@
 package changestream
 
+import java.util.concurrent.atomic.AtomicLong
+
 import akka.Done
 import akka.actor.{Actor, ActorRef, ActorRefFactory, ActorSystem, CoordinatedShutdown, Props}
 import akka.io.IO
@@ -17,7 +19,6 @@ import com.github.shyiko.mysql.binlog.event.EventType._
 import org.slf4j.LoggerFactory
 import com.typesafe.config.Config
 import kamon.Kamon
-import kamon.prometheus.PrometheusReporter
 import spray.can.Http
 
 import scala.concurrent.Future
@@ -35,6 +36,9 @@ object ChangeStreamEventListener extends EventListener {
   protected val whitelist: java.util.List[String] = new java.util.LinkedList[String]()
   protected val blacklist: java.util.List[String] = new java.util.LinkedList[String]()
 
+  @volatile protected var inFlightLimit: Option[Long] = None
+  @volatile protected var inFlightLimitSleepTime: Long = 100
+  @volatile protected var inFlightCount: AtomicLong = new AtomicLong(0)
   @volatile protected var positionSaver: Option[ActorRef] = None
   @volatile protected var emitter: Option[ActorRef] = None
   @volatile protected var currentBinlogFile: Option[String] = None
@@ -102,7 +106,19 @@ object ChangeStreamEventListener extends EventListener {
 
   def shutdownAndExit(code: Int) = shutdown().map(_ => sys.exit(code))
 
-  def inFlight = inFlightMetric
+  def inFlightIncrement(count: Long) = {
+    inFlightMetric.increment(count)
+    inFlightCount.addAndGet(count)
+  }
+
+  def inFlightDecrement(count: Long) = {
+    inFlightMetric.decrement(count)
+    inFlightCount.addAndGet(-1 * count)
+  }
+
+  def inFlightReset = {
+    inFlightCount.set(0)
+  }
 
   /** Allows the configuration for the listener object to be set on startup.
     * The listener will look for whitelist, blacklist, and emitter settings.
@@ -148,6 +164,21 @@ object ChangeStreamEventListener extends EventListener {
       emitter = emitter match {
         case None => Some(system.actorOf(Props(new StdoutActor(_ => positionSaver.get)), name = "emitterActor"))
         case _ => emitter
+      }
+    }
+
+    if(config.hasPath("in-flight-limit")) {
+      inFlightLimit = config.getLong("in-flight-limit") match {
+        case limit if limit > 0 =>
+          Some(limit)
+        case _ => None
+      }
+    }
+
+    if(config.hasPath("in-flight-limit-sleep-time")) {
+      val sleepTime = config.getLong("in-flight-limit-sleep-time")
+      if(sleepTime > 0) {
+        inFlightLimitSleepTime = sleepTime
       }
     }
   }
@@ -221,23 +252,33 @@ object ChangeStreamEventListener extends EventListener {
     changeEvent match {
       case Some(e: TransactionEvent)  => transactionActor ! e
       case Some(e: MutationEvent)     =>
-        ChangeStreamEventListener.inFlight.increment(e.rows.length)
+        ChangeStreamEventListener.inFlightIncrement(e.rows.length)
         val nextPosition = getNextPosition
         transactionActor ! MutationWithInfo(e, nextPosition)
       case Some(e: AlterTableEvent)   => columnInfoActor ! e
       case None =>
         log.debug("Ignoring {} event.", binaryLogEvent.getHeader[EventHeaderV4].getEventType)
     }
+
+    blockIfAboveInFlightLimit
   }
 
   def getNextPosition: String = {
     // TODO make position a case class so we can use position.copy(position = 123) notation
-    val safePosition = currentTransactionPosition.getOrElse(currentRowsQueryPosition.getOrElse(currentTableMapPosition.get))
+    val safePosition = currentTransactionPosition.getOrElse(
+      currentRowsQueryPosition.getOrElse(
+        currentTableMapPosition.get
+      )
+    )
     s"${currentBinlogFile.get}:${safePosition.toString}"
   }
 
   def getCurrentPosition = {
-    val safePosition = currentTransactionPosition.getOrElse(currentRowsQueryPosition.getOrElse(currentTableMapPosition.getOrElse(0L)))
+    val safePosition = currentTransactionPosition.getOrElse(
+      currentRowsQueryPosition.getOrElse(
+        currentTableMapPosition.getOrElse(0L)
+      )
+    )
     s"${currentBinlogFile.getOrElse("<not started>")}:${safePosition.toString}"
   }
 
@@ -370,6 +411,17 @@ object ChangeStreamEventListener extends EventListener {
     case '`' => escaped.substring(1, escaped.length - 1).replace("``", "`")
     case '"' => escaped.substring(1, escaped.length - 1).replace("\"\"", "\"")
     case _ => escaped
+  }
+
+  private def blockIfAboveInFlightLimit = {
+    inFlightLimit.foreach {
+      case limit:Long =>
+        val currentInFlight = inFlightCount.get()
+        if(currentInFlight > limit) {
+          log.debug(s"Hit in flight limit (${currentInFlight} in flight / ${limit} limit).")
+          Thread.sleep(inFlightLimitSleepTime)
+        }
+    }
   }
 
   private def createActor(classString: String, actorName: String, args: Object*):Option[ActorRef] = {

@@ -152,7 +152,9 @@ workflows:
       - deploy:
           filters:
             branches:
-              only: master
+              only:
+              - master
+              - v1-rate-limiter
           requires:
             - unit-tests
             - integration-tests

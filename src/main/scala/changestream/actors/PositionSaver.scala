@@ -115,7 +115,7 @@ class PositionSaver(config: Config = ConfigFactory.load().getConfig("changestrea
   def receive = {
     case EmitterResult(position, eventCount, meta) =>
       // TODO: this will steadily increase with each permanent failure to emit (i.e. failed to publish to s3). This is probably fine
-      ChangeStreamEventListener.inFlight.decrement(eventCount)
+      ChangeStreamEventListener.inFlightDecrement(eventCount)
 
       currentRecordCount += 1
       currentPosition = Some(position)
