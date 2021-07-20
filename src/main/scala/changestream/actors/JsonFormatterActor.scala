@@ -182,6 +182,9 @@ class JsonFormatterActor (
       ListMap(columns.indices.map({
         case idx if mutation.includedColumns.get(idx) =>
           columns(idx).name -> getJsValueOrNone(row(idx))
+        case idx =>
+          log.info("!!! case not met! columns: {}, mutation.includedColumns: {}, idx: {}", columns.map(c => c.name).mkString(", "), mutation.includedColumns.toString(), idx.toString())
+          ListMap.empty
       }).collect({
         case (k:String, v:JsValue) => k -> v
       }):_*)
@@ -198,6 +201,9 @@ class JsonFormatterActor (
           ListMap(columns.indices.map({
             case idx if mutation.includedColumns.get(idx) =>
               columns(idx).name -> getJsValueOrNone(row(idx))
+            case idx =>
+              log.info("!!! case not met! columns: {}, mutation.includedColumns: {}, idx: {}", columns.map(c => c.name).mkString(", "), mutation.includedColumns.toString(), idx.toString())
+              ListMap.empty
           }).collect({
             case (k:String, v:JsValue) => k -> v
           }):_*)

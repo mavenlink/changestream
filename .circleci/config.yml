@@ -154,7 +154,7 @@ workflows:
             branches:
               only:
               - master
-              - v1-rate-limiter
+              - log-env
           requires:
             - unit-tests
             - integration-tests
