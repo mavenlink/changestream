@@ -5,7 +5,7 @@
       <pattern>%d{HH:mm:ss.SSS} [%X{sourceThread}] %-5level %logger{36} %X{akkaSource} - %msg%n</pattern>
     </encoder>
   </appender>
-  <root level="INFO">
+  <root level="${CHANGESTREAM_LOG_LEVEL}">
     <appender-ref ref="STDOUT" />
   </root>
 </configuration>
